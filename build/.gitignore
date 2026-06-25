@@ -1,0 +1,5 @@
+*.apk
+*.idsig
+*.dex
+*.keystore
+assets/
