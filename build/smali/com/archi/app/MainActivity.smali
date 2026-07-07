@@ -28,12 +28,16 @@
     new-instance v0, Landroid/webkit/WebView;
     invoke-direct {v0, p0}, Landroid/webkit/WebView;-><init>(Landroid/content/Context;)V
 
-    # store webView field
+    # webView field'a kaydet
     iput-object v0, p0, Lcom/archi/app/MainActivity;->webView:Landroid/webkit/WebView;
 
-    # webView.setBackgroundColor(0xFF0C0E14 = dark background)
-    const v1, -0xFF3F1EC
+    # webView.setBackgroundColor(0xFF0C0E14)
+    const v1, -0xF3F1EC
     invoke-virtual {v0, v1}, Landroid/webkit/WebView;->setBackgroundColor(I)V
+
+    # setInitialScale(0) — viewport initial-scale=1.0 değerini kullan
+    const/4 v1, 0x0
+    invoke-virtual {v0, v1}, Landroid/webkit/WebView;->setInitialScale(I)V
 
     # setContentView(webView)
     invoke-virtual {p0, v0}, Landroid/app/Activity;->setContentView(Landroid/view/View;)V
@@ -65,15 +69,15 @@
     const/4 v2, 0x0
     invoke-virtual {v1, v2}, Landroid/webkit/WebSettings;->setMixedContentMode(I)V
 
-    # setLoadWithOverviewMode(true)
+    # setUseWideViewPort(true) — viewport meta etiketini tanı
     const/4 v2, 0x1
-    invoke-virtual {v1, v2}, Landroid/webkit/WebSettings;->setLoadWithOverviewMode(Z)V
-
-    # setUseWideViewPort(true)
     invoke-virtual {v1, v2}, Landroid/webkit/WebSettings;->setUseWideViewPort(Z)V
 
-    # setBuiltInZoomControls(false)
+    # setLoadWithOverviewMode(false) — initial-scale=1.0'a uyu, zoom yapma
     const/4 v2, 0x0
+    invoke-virtual {v1, v2}, Landroid/webkit/WebSettings;->setLoadWithOverviewMode(Z)V
+
+    # setBuiltInZoomControls(false)
     invoke-virtual {v1, v2}, Landroid/webkit/WebSettings;->setBuiltInZoomControls(Z)V
 
     # setDisplayZoomControls(false)
@@ -82,6 +86,10 @@
     # setCacheMode(LOAD_DEFAULT = -1)
     const/4 v2, -0x1
     invoke-virtual {v1, v2}, Landroid/webkit/WebSettings;->setCacheMode(I)V
+
+    # setTextZoom(100) — A35 sistem yazı boyutu ayarından etkilenme
+    const/16 v2, 0x64
+    invoke-virtual {v1, v2}, Landroid/webkit/WebSettings;->setTextZoom(I)V
 
     # new WebViewClient()
     new-instance v3, Landroid/webkit/WebViewClient;
@@ -103,19 +111,15 @@
 .method public onKeyDown(ILandroid/view/KeyEvent;)Z
     .registers 5
 
-    # if keyCode != KEYCODE_BACK(4), call super
     const/4 v0, 0x4
     if-ne p1, v0, :not_back
 
-    # get webView field
     iget-object v0, p0, Lcom/archi/app/MainActivity;->webView:Landroid/webkit/WebView;
 
-    # if webView.canGoBack()
     invoke-virtual {v0}, Landroid/webkit/WebView;->canGoBack()Z
     move-result v1
     if-eqz v1, :not_back
 
-    # webView.goBack()
     invoke-virtual {v0}, Landroid/webkit/WebView;->goBack()V
     const/4 v0, 0x1
     return v0
