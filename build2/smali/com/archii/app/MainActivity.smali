@@ -88,7 +88,7 @@
 .end method
 
 .method protected onActivityResult(IILandroid/content/Intent;)V
-    .registers 8
+    .registers 10
 
     const/16 v0, 0x64
     if-ne p1, v0, :super_call

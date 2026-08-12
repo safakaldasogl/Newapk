@@ -105,7 +105,7 @@
 
 # Dosya seçici sonucu
 .method protected onActivityResult(IILandroid/content/Intent;)V
-    .registers 8
+    .registers 10
 
     # requestCode == 100 (FILE_CHOOSER)?
     const/16 v0, 0x64
@@ -127,7 +127,7 @@
     invoke-static {v3}, Landroid/net/Uri;->parse(Ljava/lang/String;)Landroid/net/Uri;
     move-result-object v3
 
-    # Uri[] dizisi oluştur
+    # Uri[] dizisi oluştur - v4/v5 gerçek local register (.registers 10, 4 param)
     const/4 v4, 0x1
     new-array v4, v4, [Landroid/net/Uri;
     const/4 v5, 0x0
