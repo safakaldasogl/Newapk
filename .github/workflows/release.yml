@@ -1,0 +1,119 @@
+name: Build & Release APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      app:
+        description: 'Hangi APK: archi veya archii'
+        required: true
+        default: 'archii'
+        type: choice
+        options:
+          - archi
+          - archii
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q \
+            android-sdk-build-tools \
+            android-sdk-platform-23 \
+            libsmali-java \
+            python3-pillow \
+            openjdk-17-jdk
+
+      - name: Build Archi APK
+        if: inputs.app == 'archi'
+        run: |
+          BUILDDIR=build
+          OUTDIR=/tmp/build-out
+          mkdir -p $OUTDIR
+
+          java -jar /usr/share/java/smali.jar assemble $BUILDDIR/smali -o $OUTDIR/classes.dex
+
+          aapt package -f \
+            -M $BUILDDIR/AndroidManifest.xml \
+            -S $BUILDDIR/res \
+            -A $BUILDDIR/assets \
+            -I /usr/lib/android-sdk/platforms/android-23/android.jar \
+            -F $OUTDIR/unsigned.apk
+
+          cd $OUTDIR
+          zip -j unsigned.apk classes.dex
+          zipalign -f 4 unsigned.apk aligned.apk
+
+          cd $GITHUB_WORKSPACE
+          keytool -genkeypair -v -keystore release.keystore -alias archi \
+            -keyalg RSA -keysize 2048 -validity 9999 \
+            -dname "CN=Archi,OU=Dev,O=Archi,L=TR,S=TR,C=TR" \
+            -storepass android -keypass android
+
+          apksigner sign \
+            --ks release.keystore \
+            --ks-key-alias archi \
+            --ks-pass pass:android \
+            --key-pass pass:android \
+            --out Archi-release.apk \
+            $OUTDIR/aligned.apk
+
+          echo "APK_FILE=Archi-release.apk" >> $GITHUB_ENV
+          echo "RELEASE_TAG=archi-$(date +%Y%m%d-%H%M)" >> $GITHUB_ENV
+          echo "RELEASE_NAME=Archi $(date +%Y-%m-%d)" >> $GITHUB_ENV
+
+      - name: Build Archii APK
+        if: inputs.app == 'archii'
+        run: |
+          BUILDDIR=build2
+          OUTDIR=/tmp/build-out
+          mkdir -p $OUTDIR
+
+          java -jar /usr/share/java/smali.jar assemble $BUILDDIR/smali -o $OUTDIR/classes.dex
+
+          aapt package -f \
+            -M $BUILDDIR/AndroidManifest.xml \
+            -S $BUILDDIR/res \
+            -A $BUILDDIR/assets \
+            -I /usr/lib/android-sdk/platforms/android-23/android.jar \
+            -F $OUTDIR/unsigned.apk
+
+          cd $OUTDIR
+          zip -j unsigned.apk classes.dex
+          zipalign -f 4 unsigned.apk aligned.apk
+
+          cd $GITHUB_WORKSPACE
+          keytool -genkeypair -v -keystore release.keystore -alias archi \
+            -keyalg RSA -keysize 2048 -validity 9999 \
+            -dname "CN=Archii,OU=Dev,O=Archii,L=TR,S=TR,C=TR" \
+            -storepass android -keypass android
+
+          apksigner sign \
+            --ks release.keystore \
+            --ks-key-alias archi \
+            --ks-pass pass:android \
+            --key-pass pass:android \
+            --out Archii-release.apk \
+            $OUTDIR/aligned.apk
+
+          echo "APK_FILE=Archii-release.apk" >> $GITHUB_ENV
+          echo "RELEASE_TAG=archii-$(date +%Y%m%d-%H%M)" >> $GITHUB_ENV
+          echo "RELEASE_NAME=Archii $(date +%Y-%m-%d)" >> $GITHUB_ENV
+
+      - name: Create GitHub Release
+        run: |
+          gh release create "$RELEASE_TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "$RELEASE_NAME" \
+            --notes "APK indir → sağdaki Assets bölümünden." \
+            "$APK_FILE"
+        env:
+          GH_TOKEN: ${{ github.token }}
